@@ -1,0 +1,15 @@
+{
+  "dependencies": {},
+  "name": "drag-and-drop-project",
+  "description": "",
+  "version": "1.0.0",
+  "main": "app.js",
+  "devDependencies": {
+    "lite-server": "^2.6.1"
+  },
+  "scripts": {
+    "start": "lite-server"
+  },
+  "author": "@harshitScript",
+  "license": "ISC"
+}

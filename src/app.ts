@@ -1,0 +1,1 @@
+console.log('Hi from the new typescript project.')
