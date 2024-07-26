@@ -1,7 +1,16 @@
+enum ProjectStats { ACTIVE, INACTIVE } // general convention of enum to use capital letter as property
+
+// Project Class
+class Project {
+    constructor(public id: string, public title: string, public description: string, public people: number, public status: ProjectStats) { }
+}
+
+type Listener = (items: Project[]) => void
+
 // Project State Mangement Singleton Class
 class ProjectState {
-    private listners: Array<any> = [];
-    private projects: Array<any> = [];
+    private listners: Listener[] = [];
+    private projects: Project[] = [];
     private static instance: ProjectState
     private constructor() {
 
@@ -15,12 +24,13 @@ class ProjectState {
         return this.instance
     }
 
-    addListner(listnerfn: any) {
+    addListner(listnerfn: Listener) {
         this.listners.push(listnerfn);
     }
 
     addProject(title: string, description: string, people: number) {
-        const newProject = { title, description, people };
+        const newProject = new Project(Math.random().toString(), title, description, people, ProjectStats.ACTIVE)
+        console.log(newProject)
         this.projects.push(newProject);
         for (const listnerfn of this.listners) {
             listnerfn(this.projects.slice());// new copy of the array
@@ -79,7 +89,7 @@ class ProjectList {
     templeteElement: HTMLTemplateElement;
     hostElement: HTMLDivElement;
     element: HTMLElement;
-    assignedProjects: any[];
+    assignedProjects: Project[];
     constructor(private type: 'active' | 'finished') {
         this.templeteElement = document.querySelector('#project-list')!
         this.hostElement = document.querySelector('#app')!
@@ -87,8 +97,15 @@ class ProjectList {
         const importedNode = document.importNode(this.templeteElement.content, true); //? used to select the entire content of dom element.
         this.element = <HTMLElement>importedNode.firstElementChild!;
         this.element.id = `${this.type}-projects`;
-        projectState.addListner((projects: any[]) => {
-            this.assignedProjects = projects
+        projectState.addListner((projects: Project[]) => {
+            const releventProjects = projects.filter(project => {
+                if (this.type === 'active') {
+                    return project.status === ProjectStats.ACTIVE
+                } else {
+                    return project.status === ProjectStats.INACTIVE
+                }
+            })
+            this.assignedProjects = releventProjects
             this.renderProjects();
         })
         this.attach();
@@ -97,6 +114,7 @@ class ProjectList {
 
     private renderProjects() {
         const listEl = <HTMLUListElement>document.querySelector(`#${this.type}-projects-list`)!
+        listEl.innerHTML = ''
         for (const prjItem of this.assignedProjects) {
             const listItem = document.createElement('li');
             listItem.textContent = prjItem.title
