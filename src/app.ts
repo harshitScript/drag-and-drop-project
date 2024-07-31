@@ -1,5 +1,15 @@
 enum ProjectStatus { ACTIVE, FINISHED } // general convention of enum to use capital letters
 
+// Drag and Drop Interfaces
+interface Draggable {
+    dragStartHandler(event: DragEvent): void;
+    dragEndHandler(event: DragEvent): void;
+}
+interface DragTarget {
+    dragOverHandler(event: DragEvent): void;
+    dropHandler(event: DragEvent): void;
+    dragLeaveHandler(event: DragEvent): void;
+}
 // Project Class
 class Project {
     constructor(
@@ -48,6 +58,14 @@ class ProjectState extends State<Project> {
         );
         this.projects.push(newProject);
         this.updateListeners();
+    }
+
+    moveProject(projectId: string, newStatus: ProjectStatus) {
+        const project = this.projects.find(project => project.id === projectId);
+        if (project && project.status !== newStatus) {
+            project.status = newStatus;
+            this.updateListeners()
+        }
     }
 
     private updateListeners() {
@@ -133,11 +151,11 @@ abstract class Component<T extends HTMLElement, U extends HTMLElement> {
 }
 
 // Project Item Class
-class ProjectItem extends Component<HTMLUListElement, HTMLLIElement> {
+class ProjectItem extends Component<HTMLUListElement, HTMLLIElement> implements Draggable {
     private project: Project;
 
-    private get peopleAssignedText():string {
-        if (this.project.people > 1){
+    private get peopleAssignedText(): string {
+        if (this.project.people > 1) {
             return `${this.project.people} persons assigned`
         }
         return `1 person assigned`
@@ -150,7 +168,21 @@ class ProjectItem extends Component<HTMLUListElement, HTMLLIElement> {
         this.renderContent();
     }
 
-    configure() { }
+    @AutoBind
+    dragStartHandler(event: DragEvent) {
+        event.dataTransfer!.setData('text/plain', this.project.id);
+        event.dataTransfer!.effectAllowed = 'move';
+    }
+
+    @AutoBind
+    dragEndHandler(event: DragEvent) {
+        console.log("The drag ended!")
+    }
+
+    configure() {
+        this.element.addEventListener('dragstart', this.dragStartHandler)
+        this.element.addEventListener("dragend", this.dragEndHandler)
+    }
 
     renderContent() {
         this.element.querySelector('h2')!.textContent = this.project.title;
@@ -160,7 +192,7 @@ class ProjectItem extends Component<HTMLUListElement, HTMLLIElement> {
 }
 
 // Project List Class
-class ProjectList extends Component<HTMLDivElement, HTMLElement> {
+class ProjectList extends Component<HTMLDivElement, HTMLElement> implements DragTarget {
     assignedProjects: Project[];
 
     constructor(private type: 'active' | 'finished') {
@@ -171,6 +203,9 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
     }
 
     configure() {
+        this.element.querySelector('ul')!.addEventListener('dragover', this.dragOverHandler);
+        this.element.querySelector('ul')!.addEventListener('drop', this.dropHandler);
+        this.element.querySelector('ul')!.addEventListener('dragleave', this.dragLeaveHandler);
         projectState.addListener((projects: Project[]) => {
             const relevantProjects = projects.filter(prj => {
                 if (this.type === 'active') {
@@ -181,6 +216,25 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
             this.assignedProjects = relevantProjects;
             this.renderProjects();
         });
+    }
+
+    @AutoBind
+    dragOverHandler(event: DragEvent): void {
+        if (event.dataTransfer && event.dataTransfer.types[0] === 'text/plain') {
+            event.preventDefault(); // To overcome the default behaviour of javaScript 'not to allow drop'
+            this.element.querySelector('ul')!.classList.add('droppable')
+        }
+
+    }
+
+    @AutoBind
+    dropHandler(event: DragEvent): void {
+        projectState.moveProject(event.dataTransfer!.getData('text/plain'), this.type === 'active' ? ProjectStatus.ACTIVE : ProjectStatus.FINISHED)
+    }
+
+    @AutoBind
+    dragLeaveHandler(event: DragEvent): void {
+        this.element.querySelector('ul')!.classList.remove('droppable')
     }
 
     renderContent() {
