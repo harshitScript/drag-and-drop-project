@@ -1,30 +1,26 @@
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
 import { AutoBind } from "../decorators/autobind.js";
 import { projectState } from "../state/project-state.js";
-import { Validatable, validate } from "../utils/validation.js";
-import  Component  from "./base-component.js";
-
-// Project Input Class
-export class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
-    titleInputElement: HTMLInputElement;
-    descriptionInputElement: HTMLTextAreaElement;
-    peopleInputElement: HTMLInputElement;
-
+import { validate } from "../utils/validation.js";
+import Component from "./base-component.js";
+export class ProjectInput extends Component {
     constructor() {
         super('project-input', 'app', true);
-        this.titleInputElement = this.element.querySelector('#title')! as HTMLInputElement;
-        this.descriptionInputElement = this.element.querySelector('#description')! as HTMLTextAreaElement;
-        this.peopleInputElement = this.element.querySelector('#people')! as HTMLInputElement;
+        this.titleInputElement = this.element.querySelector('#title');
+        this.descriptionInputElement = this.element.querySelector('#description');
+        this.peopleInputElement = this.element.querySelector('#people');
         this.configure();
     }
-
     configure() {
         this.element.addEventListener('submit', this.submitHandler);
     }
-
     renderContent() { }
-
-    @AutoBind
-    private submitHandler(event: Event) {
+    submitHandler(event) {
         event.preventDefault();
         const userInput = this.gatherUserInput();
         if (Array.isArray(userInput)) {
@@ -33,45 +29,42 @@ export class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
             this.clearInputs();
         }
     }
-
-    private gatherUserInput(): [string, string, number] | void {
+    gatherUserInput() {
         const enteredTitle = this.titleInputElement.value;
         const enteredDescription = this.descriptionInputElement.value;
         const enteredPeople = this.peopleInputElement.value;
-
-        const titleValidatable: Validatable = {
+        const titleValidatable = {
             value: enteredTitle,
             required: true,
             minLength: 1,
             maxLength: 15
         };
-        const descriptionValidatable: Validatable = {
+        const descriptionValidatable = {
             value: enteredDescription,
             required: true,
             minLength: 10,
             maxLength: 50
         };
-        const peopleValidatable: Validatable = {
+        const peopleValidatable = {
             value: +enteredPeople,
             required: true,
             min: 1,
             max: 10
         };
-
-        if (
-            !validate(titleValidatable) ||
+        if (!validate(titleValidatable) ||
             !validate(descriptionValidatable) ||
-            !validate(peopleValidatable)
-        ) {
+            !validate(peopleValidatable)) {
             alert('Invalid input, please try again!');
             return;
         }
         return [enteredTitle, enteredDescription, +enteredPeople];
     }
-
-    private clearInputs() {
+    clearInputs() {
         this.titleInputElement.value = '';
         this.descriptionInputElement.value = '';
         this.peopleInputElement.value = '';
     }
 }
+__decorate([
+    AutoBind
+], ProjectInput.prototype, "submitHandler", null);
