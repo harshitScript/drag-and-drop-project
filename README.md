@@ -1,3 +1,1 @@
 ﻿# drag-and-drop-project
-
-<h1>I m Harshit bhawsar</h1>
